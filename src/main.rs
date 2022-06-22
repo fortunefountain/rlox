@@ -14,7 +14,7 @@ fn main() {
 }
 
 fn run_file(path: &String) -> io::Result<()> {
-    let mut file = File::open(&path)?;
+    let mut file = File::open(&path).expect("Failed to open file");
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
     run_program(&contents);
