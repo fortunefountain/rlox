@@ -2,6 +2,32 @@ use std::io;
 use std::io::Read;
 use std::fs::File;
 use std::io::Write;
+
+enum Token {
+    Number(i32),
+    Plus,
+    Minus,
+}
+
+struct Scanner {
+    source: String,
+}
+
+impl Scanner {
+    fn new(source: String) -> Scanner {
+        Scanner {
+            source
+        }
+    }
+
+    fn scan_tokens(&mut self) -> Vec<Token> {
+        let mut tokens = Vec::new();
+        let mut current = String::new();
+        println!("{}", self.source);
+        tokens
+    }
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() > 2 {
@@ -24,12 +50,13 @@ fn run_file(path: &String) -> io::Result<()> {
     };
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-    run_program(&contents);
+    run_program(contents);
     Ok(())
 }
 
-fn run_program(_program: &String) {
-    println!("result {}", _program);
+fn run_program(program: String) {
+    let mut scanner = Scanner::new(program.to_string());
+    scanner.scan_tokens();
 }
 
 fn run_prompt(){
@@ -44,7 +71,7 @@ fn run_prompt(){
                 if input == "exit" {
                     break;
                 }
-                run_program(&input);
+                run_program(input);
             },
             Err(e) => {
                 println!("Error writing to stdout: {}", e);
