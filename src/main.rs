@@ -1,6 +1,7 @@
 use std::io;
 use std::io::Read;
 use std::fs::File;
+use std::io::Write;
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() > 2 {
@@ -28,9 +29,27 @@ fn run_file(path: &String) -> io::Result<()> {
 }
 
 fn run_program(_program: &String) {
-    println!("{}", _program);
+    println!("result {}", _program);
 }
 
 fn run_prompt(){
-
+    loop {
+        let mut stdout = io::stdout();
+        match stdout.write(b">> ") {
+            Ok(_) => {
+                io::stdout().flush().unwrap();
+                let mut input = String::new();
+                io::stdin().read_line(&mut input).unwrap();
+                let input = String::from(input.trim());
+                if input == "exit" {
+                    break;
+                }
+                run_program(&input);
+            },
+            Err(e) => {
+                println!("Error writing to stdout: {}", e);
+                std::process::exit(1);
+            }
+        };
+    }
 }
