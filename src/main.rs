@@ -12,12 +12,14 @@ enum Token {
 struct Scanner {
     source: String,
     had_error: bool,
+    pos: u32,
 }
 
 impl Scanner {
     fn new(source: String) -> Scanner {
         Scanner {
             source,
+            pos: 0,
             had_error: false
         }
     }
@@ -56,7 +58,9 @@ fn run_file(path: &String) -> io::Result<()> {
     };
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-    run_program(contents);
+    let mut scanner = Scanner::new(contents.to_string());
+    run_program(&mut scanner);
+    scanner.had_error = false; 
     Ok(())
 }
 
@@ -72,7 +76,9 @@ fn run_prompt(){
                 if input == "exit" {
                     break;
                 }
-                run_program(input);
+
+                let mut scanner = Scanner::new(input.to_string());
+                run_program(&mut scanner);
             },
             Err(e) => {
                 println!("Error writing to stdout: {}", e);
@@ -82,8 +88,7 @@ fn run_prompt(){
     }
 }
 
-fn run_program(program: String) {
-    let mut scanner = Scanner::new(program.to_string());
+fn run_program(scanner: &mut Scanner) {
     let tokens = scanner.scan_tokens();
     for token in tokens {
         println!("{:?}", token);
