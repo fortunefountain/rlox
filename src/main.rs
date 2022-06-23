@@ -2,11 +2,21 @@ use std::io;
 use std::io::Read;
 use std::fs::File;
 use std::io::Write;
+
+#[derive(Debug)]
+struct TokenData {
+    token_type: String,
+    lexame: String,
+    literal: String,
+    line: i32,
+    column: i32,
+}
+
 #[derive(Debug)]
 enum Token {
-    Number(i32),
-    Plus,
-    Minus,
+    Number(TokenData, i32),
+    Plus(TokenData),
+    Minus(TokenData),
 }
 
 struct Scanner {
