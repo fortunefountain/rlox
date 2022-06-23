@@ -11,12 +11,14 @@ enum Token {
 
 struct Scanner {
     source: String,
+    had_error: bool,
 }
 
 impl Scanner {
     fn new(source: String) -> Scanner {
         Scanner {
-            source
+            source,
+            had_error: false
         }
     }
 
@@ -24,6 +26,11 @@ impl Scanner {
         let mut tokens = Vec::new();
         let mut current = String::new();
         tokens
+    }
+
+    fn error_hander(&mut self, line_no: i32, message: String) {
+        println!("Error on line {}: {}", line_no, message);
+        self.had_error = true;
     }
 }
 
