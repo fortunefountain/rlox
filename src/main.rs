@@ -2,7 +2,7 @@ use std::io;
 use std::io::Read;
 use std::fs::File;
 use std::io::Write;
-
+#[derive(Debug)]
 enum Token {
     Number(i32),
     Plus,
@@ -23,7 +23,6 @@ impl Scanner {
     fn scan_tokens(&mut self) -> Vec<Token> {
         let mut tokens = Vec::new();
         let mut current = String::new();
-        println!("{}", self.source);
         tokens
     }
 }
@@ -54,11 +53,6 @@ fn run_file(path: &String) -> io::Result<()> {
     Ok(())
 }
 
-fn run_program(program: String) {
-    let mut scanner = Scanner::new(program.to_string());
-    scanner.scan_tokens();
-}
-
 fn run_prompt(){
     loop {
         let mut stdout = io::stdout();
@@ -80,3 +74,12 @@ fn run_prompt(){
         };
     }
 }
+
+fn run_program(program: String) {
+    let mut scanner = Scanner::new(program.to_string());
+    let tokens = scanner.scan_tokens();
+    for token in tokens {
+        println!("{:?}", token);
+    }
+}
+
