@@ -19,6 +19,22 @@ enum Token {
     Minus(TokenData),
 }
 
+impl Token {
+    fn to_string(&mut self) -> String {
+        match self {
+            Token::Number(data, value) => {
+                format!("{} {} {} {} {} {}", data.token_type, data.lexame, data.literal, data.line, data.column, value)
+            },
+            Token::Plus(data) => {
+                format!("{} {} {} {} {}", data.token_type, data.lexame, data.literal, data.line, data.column)
+            },
+            Token::Minus(data) => {
+                format!("{} {} {} {} {}", data.token_type, data.lexame, data.literal, data.line, data.column)
+            }
+        }
+    }
+}
+
 struct Scanner {
     source: String,
     had_error: bool,
@@ -37,6 +53,13 @@ impl Scanner {
     fn scan_tokens(&mut self) -> Vec<Token> {
         let mut tokens = Vec::new();
         let mut current = String::new();
+        tokens.push(Token::Number(TokenData {
+            token_type: "Number".to_string(),
+            lexame: "".to_string(),
+            literal: "".to_string(),
+            line: 0,
+            column: 0,
+        }, 0));
         tokens
     }
 
@@ -100,8 +123,8 @@ fn run_prompt(){
 
 fn run_program(scanner: &mut Scanner) {
     let tokens = scanner.scan_tokens();
-    for token in tokens {
-        println!("{:?}", token);
+    for mut token in tokens {
+        println!("{:?}", token.to_string());
     }
 }
 
