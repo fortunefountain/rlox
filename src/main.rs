@@ -38,29 +38,47 @@ impl Token {
 struct Scanner {
     source: String,
     had_error: bool,
-    pos: u32,
+    start: usize,
+    current: usize,
+    line: u32,
 }
 
 impl Scanner {
     fn new(source: String) -> Scanner {
         Scanner {
             source,
-            pos: 0,
-            had_error: false
+            had_error: false,
+            start: 0,
+            current: 0,
+            line: 1,
         }
     }
 
     fn scan_tokens(&mut self) -> Vec<Token> {
         let mut tokens = Vec::new();
-        let mut current = String::new();
-        tokens.push(Token::Number(TokenData {
-            token_type: "Number".to_string(),
-            lexame: "".to_string(),
-            literal: "".to_string(),
-            line: 0,
-            column: 0,
-        }, 0));
+        self.current = 0;
+        self.start = 0;
+
+        while !self.is_end() {
+            self.start = self.current;
+            tokens.push(self.scan_token());
+        }
         tokens
+    }
+
+    fn scan_token(&mut self) -> Token {
+        self.current += 1;
+        Token::Number(TokenData {
+            token_type: "number".to_string(),
+            lexame: "123".to_string(),
+            literal: "123".to_string(),
+            line: 1,
+            column: 1,
+        }, 123)
+    }
+
+    fn is_end(&self) -> bool {
+        self.current >= self.source.len()
     }
 
     fn error_hander(&mut self, line_no: i32, message: String) {
