@@ -8,8 +8,8 @@ struct TokenData {
     token_type: String,
     lexame: String,
     literal: String,
-    line: i32,
-    column: i32,
+    line: u32,
+    column: u32,
 }
 
 #[derive(Debug)]
@@ -17,6 +17,7 @@ enum Token {
     Number(TokenData, i32),
     Plus(TokenData),
     Minus(TokenData),
+    EOF(TokenData)
 }
 
 impl Token {
@@ -31,6 +32,9 @@ impl Token {
             Token::Minus(data) => {
                 format!("{} {} {} {} {}", data.token_type, data.lexame, data.literal, data.line, data.column)
             }
+            Token::EOF(data) => {
+                format!("{} {} {} {} {}", data.token_type, data.lexame, data.literal, data.line, data.column)
+            }
         }
     }
 }
@@ -38,8 +42,8 @@ impl Token {
 struct Scanner {
     source: String,
     had_error: bool,
-    start: usize,
-    current: usize,
+    start: u32,
+    current: u32,
     line: u32,
 }
 
@@ -56,13 +60,19 @@ impl Scanner {
 
     fn scan_tokens(&mut self) -> Vec<Token> {
         let mut tokens = Vec::new();
-        self.current = 0;
-        self.start = 0;
-
         while !self.is_end() {
             self.start = self.current;
-            tokens.push(self.scan_token());
+            self.scan_token();
         }
+        tokens.push(Token::EOF(
+            TokenData {
+                token_type: "EOF".to_string(),
+                lexame: "".to_string(),
+                literal: "".to_string(),
+                line: self.line,
+                column: self.current as u32 - self.start as u32,
+            }
+                ));
         tokens
     }
 
@@ -78,7 +88,7 @@ impl Scanner {
     }
 
     fn is_end(&self) -> bool {
-        self.current >= self.source.len()
+        self.current >= self.source.len() as u32
     }
 
     fn error_hander(&mut self, line_no: i32, message: String) {
