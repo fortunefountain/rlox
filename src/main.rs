@@ -4,8 +4,8 @@ use std::fs::File;
 use std::io::Write;
 
 #[derive(Debug)]
-struct TokenData {
-    token_type: String,
+struct Token {
+    token_type: TokenType,
     lexame: String,
     literal: String,
     line: u32,
@@ -13,27 +13,34 @@ struct TokenData {
 }
 
 #[derive(Debug)]
-enum Token {
-    Number(TokenData, i32),
-    Plus(TokenData),
-    Minus(TokenData),
-    EOF(TokenData)
+enum TokenType {
+    Number,
+    Plus,
+    Minus,
+    Eof,
+    LeftParen,
+    RightParen,
+    LeftBrace,
+    RightBrace,
+    Comma,
+    Dot,
+    Semicolon,
 }
 
 impl Token {
     fn to_string(&mut self) -> String {
-        match self {
-            Token::Number(data, value) => {
-                format!("{} {} {} {} {} {}", data.token_type, data.lexame, data.literal, data.line, data.column, value)
+        match self.token_type {
+            TokenType::Number => {
+                format!("{} {} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             },
-            Token::Plus(data) => {
-                format!("{} {} {} {} {}", data.token_type, data.lexame, data.literal, data.line, data.column)
+            TokenType::Plus => {
+                format!("{} {} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             },
-            Token::Minus(data) => {
-                format!("{} {} {} {} {}", data.token_type, data.lexame, data.literal, data.line, data.column)
+            TokenType::Minus => {
+                format!("{} {} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             }
-            Token::EOF(data) => {
-                format!("{} {} {} {} {}", data.token_type, data.lexame, data.literal, data.line, data.column)
+            TokenType::Eof => {
+                format!("{} {} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             }
         }
     }
@@ -64,35 +71,60 @@ impl Scanner {
             self.start = self.current;
             self.scan_token();
         }
-        tokens.push(Token::EOF(
-            TokenData {
-                token_type: "EOF".to_string(),
-                lexame: "".to_string(),
-                literal: "".to_string(),
-                line: self.line,
-                column: self.current as u32 - self.start as u32,
-            }
-                ));
+        tokens.push(Token {
+            token_type: TokenType::Eof,
+            lexame: String::new(),
+            literal: String::new(),
+            line: self.line,
+            column: self.current - self.start,
+        });
         tokens
     }
 
     fn scan_token(&mut self) -> Token {
-        self.current += 1;
-        Token::Number(TokenData {
-            token_type: "number".to_string(),
+        let c = self.advance();
+        match c {
+            '(' => self.add_token(TokenType::LeftParen),
+            ')' => self.add_token(TokenType::RightParen),
+            '{' => self.add_token(TokenType::LeftBrace),
+            '}' => self.add_token(TokenType::RightBrace),
+            ',' => self.add_token(TokenType::Comma),
+            '.' => self.add_token(TokenType::Dot),
+            ';' => self.add_token(TokenType::Semicolon),
+            '+' => self.add_token(TokenType::Plus),
+            '-' => self.add_token(TokenType::Minus),
+            ' ' => (),
+            '\r' => (),
+            '\t' => (),
+            '\n' => self.line += 1,
+            _ => self.error_handler(format!("Unexpected character {}", c)),
+        }
+        
+
+        Token{
+            token_type: TokenType::Number,
             lexame: "123".to_string(),
             literal: "123".to_string(),
             line: 1,
             column: 1,
-        }, 123)
+        }
+    }
+
+    fn advance(&self) -> char {
+        self.current += 1;
+        self.source.chars().nth(self.current as usize - 1).unwrap()
     }
 
     fn is_end(&self) -> bool {
         self.current >= self.source.len() as u32
     }
 
-    fn error_hander(&mut self, line_no: i32, message: String) {
-        println!("Error on line {}: {}", line_no, message);
+    fn add_token(&self, token_type: TokenType){
+
+    }
+
+    fn error_handler(&mut self, message: String) {
+        println!("Error on line {}: {}", self.line, message);
         self.had_error = true;
     }
 }
