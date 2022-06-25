@@ -26,6 +26,9 @@ enum TokenType {
     Comma,
     Dot,
     Semicolon,
+    Star,
+    Bang,
+    BangEqual
 }
 impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -41,6 +44,9 @@ impl fmt::Display for TokenType {
             TokenType::Comma => write!(f, "Comma"),
             TokenType::Dot => write!(f, "Dot"),
             TokenType::Semicolon => write!(f, "Semicolon"),
+            TokenType::Star => write!(f, "Star"),
+            TokenType::Bang => write!(f, "Bang"),
+            TokenType::BangEqual => write!(f, "BangEqual"),
         }
     }
 }
@@ -56,29 +62,38 @@ impl Token {
             },
             TokenType::Minus => {
                 format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
-            }
+            },
             TokenType::Eof => {
                 format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
-            }
+            },
             TokenType::LeftParen => {
                 format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             }
             TokenType::RightParen => {
                 format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
-            }
+            },
             TokenType::LeftBrace => {
                 format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             }
             TokenType::RightBrace => {
                 format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
-            }
+            },
             TokenType::Comma => {
                 format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
-            }
+            },
             TokenType::Dot => {
                 format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
-            }
+            },
             TokenType::Semicolon => {
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+            },
+            TokenType::Star => {
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+            }
+            TokenType::Bang => {
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+            }
+            TokenType::BangEqual => {
                 format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             }
         }
@@ -133,11 +148,31 @@ impl Scanner {
             ';' => self.add_token(TokenType::Semicolon),
             '+' => self.add_token(TokenType::Plus),
             '-' => self.add_token(TokenType::Minus),
+            '*' => self.add_token(TokenType::Star),
+            '!' => {
+                if self.match_char('=') {
+                    self.add_token(TokenType::BangEqual);
+                } else {
+                    self.add_token(TokenType::Bang);
+                }
+            }
             ' ' => (),
             '\r' => (),
             '\t' => (),
             '\n' => self.line += 1,
             _ => self.error_handler(format!("Unexpected character {}", c)),
+        }
+    }
+
+    fn match_char(&mut self, expected: char) -> bool {
+        if self.is_end() {
+            return false;
+        }
+        if (self.source.chars().nth(self.current as usize).unwrap()) == expected {
+            self.current += 1;
+            return true;
+        }else {
+            return false;
         }
     }
 
@@ -221,8 +256,8 @@ fn run_prompt(){
 }
 
 fn run_program(scanner: &mut Scanner) {
-    let mut tokens = scanner.scan_tokens();
-    for mut token in tokens {
+    let tokens = scanner.scan_tokens();
+    for token in tokens {
         println!("{:?}", token.to_string());
     }
 }
