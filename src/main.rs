@@ -2,6 +2,7 @@ use std::io;
 use std::io::Read;
 use std::fs::File;
 use std::io::Write;
+use std::fmt;
 
 #[derive(Debug)]
 struct Token {
@@ -26,21 +27,59 @@ enum TokenType {
     Dot,
     Semicolon,
 }
+impl fmt::Display for TokenType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            TokenType::Number => write!(f, "Number"),
+            TokenType::Plus => write!(f, "Plus"),
+            TokenType::Minus => write!(f, "Minus"),
+            TokenType::Eof => write!(f, "Eof"),
+            TokenType::LeftParen => write!(f, "LeftParen"),
+            TokenType::RightParen => write!(f, "RightParen"),
+            TokenType::LeftBrace => write!(f, "LeftBrace"),
+            TokenType::RightBrace => write!(f, "RightBrace"),
+            TokenType::Comma => write!(f, "Comma"),
+            TokenType::Dot => write!(f, "Dot"),
+            TokenType::Semicolon => write!(f, "Semicolon"),
+        }
+    }
+}
 
 impl Token {
     fn to_string(&mut self) -> String {
         match self.token_type {
             TokenType::Number => {
-                format!("{} {} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             },
             TokenType::Plus => {
-                format!("{} {} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             },
             TokenType::Minus => {
-                format!("{} {} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             }
             TokenType::Eof => {
-                format!("{} {} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+            }
+            TokenType::LeftParen => {
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+            }
+            TokenType::RightParen => {
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+            }
+            TokenType::LeftBrace => {
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+            }
+            TokenType::RightBrace => {
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+            }
+            TokenType::Comma => {
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+            }
+            TokenType::Dot => {
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+            }
+            TokenType::Semicolon => {
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             }
         }
     }
@@ -52,6 +91,7 @@ struct Scanner {
     start: u32,
     current: u32,
     line: u32,
+    tokens: Vec<Token>,
 }
 
 impl Scanner {
@@ -62,26 +102,26 @@ impl Scanner {
             start: 0,
             current: 0,
             line: 1,
+            tokens: Vec::new(),
         }
     }
 
-    fn scan_tokens(&mut self) -> Vec<Token> {
-        let mut tokens = Vec::new();
+    fn scan_tokens(&mut self) -> &mut Vec<Token>{
         while !self.is_end() {
             self.start = self.current;
             self.scan_token();
         }
-        tokens.push(Token {
+        self.tokens.push(Token {
             token_type: TokenType::Eof,
             lexame: String::new(),
             literal: String::new(),
             line: self.line,
             column: self.current - self.start,
         });
-        tokens
+        &mut self.tokens
     }
 
-    fn scan_token(&mut self) -> Token {
+    fn scan_token(&mut self){
         let c = self.advance();
         match c {
             '(' => self.add_token(TokenType::LeftParen),
@@ -99,18 +139,9 @@ impl Scanner {
             '\n' => self.line += 1,
             _ => self.error_handler(format!("Unexpected character {}", c)),
         }
-        
-
-        Token{
-            token_type: TokenType::Number,
-            lexame: "123".to_string(),
-            literal: "123".to_string(),
-            line: 1,
-            column: 1,
-        }
     }
 
-    fn advance(&self) -> char {
+    fn advance(&mut self) -> char {
         self.current += 1;
         self.source.chars().nth(self.current as usize - 1).unwrap()
     }
@@ -119,8 +150,16 @@ impl Scanner {
         self.current >= self.source.len() as u32
     }
 
-    fn add_token(&self, token_type: TokenType){
-
+    fn add_token(&mut self, token_type: TokenType){
+        self.tokens.push(
+            Token {
+                token_type,
+                lexame: self.source[self.start as usize..self.current as usize].to_string(),
+                literal: String::new(),
+                line: self.line,
+                column: self.current - self.start,
+            }
+        )
     }
 
     fn error_handler(&mut self, message: String) {
@@ -182,7 +221,7 @@ fn run_prompt(){
 }
 
 fn run_program(scanner: &mut Scanner) {
-    let tokens = scanner.scan_tokens();
+    let mut tokens = scanner.scan_tokens();
     for mut token in tokens {
         println!("{:?}", token.to_string());
     }
