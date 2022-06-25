@@ -28,7 +28,8 @@ enum TokenType {
     Semicolon,
     Star,
     Bang,
-    BangEqual
+    BangEqual,
+    Slash
 }
 impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -47,6 +48,7 @@ impl fmt::Display for TokenType {
             TokenType::Star => write!(f, "Star"),
             TokenType::Bang => write!(f, "Bang"),
             TokenType::BangEqual => write!(f, "BangEqual"),
+            TokenType::Slash => write!(f, "Slash"),
         }
     }
 }
@@ -94,6 +96,9 @@ impl Token {
                 format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             }
             TokenType::BangEqual => {
+                format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
+            }
+            TokenType::Slash => {
                 format!("{} {} {} {} {}", self.token_type, self.lexame, self.literal, self.line, self.column)
             }
         }
@@ -156,6 +161,19 @@ impl Scanner {
                     self.add_token(TokenType::Bang);
                 }
             }
+            '/' => {
+                if self.match_char('/') {
+                    while self.peek() != '\n' && !self.is_end() {
+                        self.advance();
+                    }
+                } else if self.match_char('*') {
+                    while !(self.match_char('*') && self.match_char('/')) && !self.is_end() {
+                        self.advance();
+                    }
+                } else {
+                    self.add_token(TokenType::Slash);
+                }
+            }
             ' ' => (),
             '\r' => (),
             '\t' => (),
@@ -174,6 +192,13 @@ impl Scanner {
         }else {
             return false;
         }
+    }
+
+    fn peek(&mut self) -> char {
+        if self.is_end() {
+            return '\0';
+        }
+        self.source.chars().nth(self.current as usize).unwrap()
     }
 
     fn advance(&mut self) -> char {
