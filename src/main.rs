@@ -474,6 +474,38 @@ impl Scanner {
     }
 }
 
+enum ExprType{
+    Integer,
+    String,
+    Boolean,
+    Nil,
+    Function,
+    Variable,
+    Array,
+    Hash,
+    Prefix,
+    Infix,
+    Grouping,
+}
+
+struct Expr {
+    expr_type: ExprType,
+    token: Token,
+    left: Option<Box<Expr>>,
+    right: Option<Box<Expr>>,
+}
+
+impl Expr {
+    fn new(token: Token) -> Expr {
+        Expr {
+            expr_type: ExprType::Nil,
+            token,
+            left: None,
+            right: None,
+        }
+    }
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args.len() > 2 {
