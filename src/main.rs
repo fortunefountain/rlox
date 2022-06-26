@@ -314,6 +314,13 @@ impl Scanner {
                     self.add_token(TokenType::Slash);
                 }
             }
+            'o' => {
+                if self.match_char('r') {
+                    self.add_token(TokenType::Or);
+                } else {
+                    self.add_token(TokenType::Identifier);
+                }
+            }
             ' ' => (),
             '\r' => (),
             '\t' => (),
