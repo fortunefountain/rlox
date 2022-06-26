@@ -319,7 +319,13 @@ impl Scanner {
             '\t' => (),
             '\n' => self.line += 1,
             '"' => self.string(),
-            _ => self.error_handler(format!("Unexpected character {}", c)),
+            _ => {
+                if Scanner::is_digit(c) {
+                    self.number();
+                } else {
+                    self.handle_error(format!("Unexpected character {}", c));
+                }
+            }
         }
     }
 
@@ -342,6 +348,13 @@ impl Scanner {
         self.source.chars().nth(self.current as usize).unwrap()
     }
 
+    fn peek_next(&mut self) -> char {
+        if self.current + 1 >= self.source.len() as u32 {
+            return '\0';
+        }
+        self.source.chars().nth((self.current + 1) as usize).unwrap()
+    }
+
     fn advance(&mut self) -> char {
         self.current += 1;
         self.source.chars().nth(self.current as usize - 1).unwrap()
@@ -349,6 +362,27 @@ impl Scanner {
 
     fn is_end(&self) -> bool {
         self.current >= self.source.len() as u32
+    }
+
+    fn is_digit(c: char) -> bool {
+        c >= '0' && c <= '9'
+    }
+
+    fn is_alpha(c: char) -> bool {
+        (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
+    }
+
+    fn number(&mut self) {
+        while Scanner::is_digit(self.peek()) {
+            self.advance();
+        }
+        if self.peek() == '.' && Scanner::is_digit(self.peek_next()) {
+            self.advance();
+            while Scanner::is_digit(self.peek()) {
+                self.advance();
+            }
+        }
+        self.add_token(TokenType::Number);
     }
 
     fn add_token(&mut self, token_type: TokenType){
@@ -381,7 +415,7 @@ impl Scanner {
             self.advance();
         }
         if self.is_end() {
-            self.error_handler("Unterminated string.".to_string());
+            self.handle_error("Unterminated string.".to_string());
         } else {
             self.advance();
             let value = self.source[self.start as usize + 1..self.current as usize - 1].to_string();
@@ -389,8 +423,7 @@ impl Scanner {
         }
     }
 
-
-    fn error_handler(&mut self, message: String) {
+    fn handle_error(&mut self, message: String) {
         println!("Error on line {}: {}", self.line, message);
         self.had_error = true;
     }
