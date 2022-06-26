@@ -225,6 +225,29 @@ impl Token {
     }
 }
 
+fn keyword(lexeme: &str) -> TokenType {
+    match lexeme {
+        "and" => TokenType::And,
+        "class" => TokenType::Class,
+        "else" => TokenType::Else,
+        "false" => TokenType::False,
+        "fun" => TokenType::Fun,
+        "for" => TokenType::For,
+        "if" => TokenType::If,
+        "nil" => TokenType::Nil,
+        "or" => TokenType::Or,
+        "print" => TokenType::Print,
+        "return" => TokenType::Return,
+        "super" => TokenType::Super,
+        "this" => TokenType::This,
+        "true" => TokenType::True,
+        "var" => TokenType::Var,
+        "while" => TokenType::While,
+        _ => TokenType::Identifier,
+    }
+}
+
+
 struct Scanner {
     source: String,
     had_error: bool,
@@ -402,7 +425,9 @@ impl Scanner {
         while Scanner::is_alpha_numeric(self.peek()) {
             self.advance();
         }
-        self.add_token(TokenType::Identifier);
+        let lexeme = self.source[self.start as usize..self.current as usize].to_string();
+        let token_type = keyword(lexeme.as_str());
+        self.add_token(token_type);
     }
 
     fn add_token(&mut self, token_type: TokenType){
