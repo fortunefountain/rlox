@@ -329,8 +329,10 @@ impl Scanner {
             _ => {
                 if Scanner::is_digit(c) {
                     self.number();
+                } else if Scanner::is_alpha(c) {
+                    self.identifier();
                 } else {
-                    self.handle_error(format!("Unexpected character {}", c));
+                    self.error_token(format!("Unexpected character {}", c));
                 }
             }
         }
@@ -379,6 +381,10 @@ impl Scanner {
         (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
     }
 
+    fn is_alpha_numeric(c: char) -> bool {
+        Scanner::is_digit(c) || Scanner::is_alpha(c)
+    }
+
     fn number(&mut self) {
         while Scanner::is_digit(self.peek()) {
             self.advance();
@@ -390,6 +396,13 @@ impl Scanner {
             }
         }
         self.add_token(TokenType::Number);
+    }
+
+    fn identifier(&mut self) {
+        while Scanner::is_alpha_numeric(self.peek()) {
+            self.advance();
+        }
+        self.add_token(TokenType::Identifier);
     }
 
     fn add_token(&mut self, token_type: TokenType){
@@ -422,7 +435,7 @@ impl Scanner {
             self.advance();
         }
         if self.is_end() {
-            self.handle_error("Unterminated string.".to_string());
+            self.error_token("Unterminated string.".to_string());
         } else {
             self.advance();
             let value = self.source[self.start as usize + 1..self.current as usize - 1].to_string();
@@ -430,7 +443,7 @@ impl Scanner {
         }
     }
 
-    fn handle_error(&mut self, message: String) {
+    fn error_token(&mut self, message: String) {
         println!("Error on line {}: {}", self.line, message);
         self.had_error = true;
     }
