@@ -1,5 +1,6 @@
 use std::fmt;
-
+use std::fs::File;
+use std::io::Write;
 #[derive(Debug)]
 pub struct Token {
     token_type: TokenType,
@@ -506,4 +507,9 @@ impl Expr {
     }
 }
 
+pub fn define_ast(_output_dir: String, _base_name: String, _types: Vec<String>){
+    let _path = _output_dir + "/" + _base_name.as_str() + ".rs";
+    let mut file = File::create(_path).unwrap();
+    file.write(b"pub struct AST;").unwrap();
+}
 
