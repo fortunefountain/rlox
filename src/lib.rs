@@ -513,3 +513,66 @@ pub fn define_ast(_output_dir: String, _base_name: String, _types: Vec<String>){
     file.write(b"pub struct AST;").unwrap();
 }
 
+pub struct Writer {
+    output: String,
+}
+
+impl Writer {
+    fn new() -> Writer {
+        Writer {
+            output: String::new(),
+        }
+    }
+
+    fn write(&mut self, s: &str) {
+        self.output.push_str(s);
+    }
+
+    fn write_line(&mut self, s: &str) {
+        self.write(s);
+        self.write("\n");
+    }
+
+    fn write_indent(&mut self, indent: usize) {
+        for _ in 0..indent {
+            self.write("    ");
+        }
+    }
+}
+
+pub fn define_types(_writer : &mut Writer, _name: String, _types: Vec<String>) {
+    _writer.write_line((String::from("pub enum ") + _name.as_str() + " {").as_str());
+    for _type in _types {
+        _writer.write_line((String::from("    ") + _type.as_str() + ",").as_str());
+    }
+    _writer.write_line("}");
+}
+
+
+pub fn define_visitor(_writer: &mut Writer, _base_name: String, _types: Vec<String>){
+   for _type in _types {
+       _writer.write_line(format!("pub trait {}Visitor<'a> {{
+           fn visit_{}(&mut self, expr: &'a Expr);
+       }}", _type, _type).as_str());
+   }
+   println!("{}",_writer.output);
+}
+
+pub struct AstPrinter {
+    writer: Writer,
+    indent: usize,
+}
+
+impl AstPrinter {
+    fn new() -> AstPrinter {
+        AstPrinter {
+            writer: Writer::new(),
+            indent: 0,
+        }
+    }
+
+    fn print(&self, expr: &Expr) {
+        
+    }
+
+}
