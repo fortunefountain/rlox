@@ -475,37 +475,126 @@ impl Scanner {
     }
 }
 
-enum ExprType{
-    Integer,
-    String,
-    Boolean,
-    Nil,
-    Function,
-    Variable,
-    Array,
-    Hash,
-    Prefix,
-    Infix,
-    Grouping,
+
+pub trait Expr{
+    fn accept(&self, visitor: &mut dyn Visitor);
 }
 
-struct Expr {
-    expr_type: ExprType,
-    token: Token,
-    left: Option<Box<Expr>>,
-    right: Option<Box<Expr>>,
+pub trait Stmt{
+    fn accept(&self, visitor: &mut dyn Visitor);
 }
 
-impl Expr {
-    fn new(token: Token) -> Expr {
-        Expr {
-            expr_type: ExprType::Nil,
-            token,
-            left: None,
-            right: None,
-        }
+pub struct Program{
+    pub statements: Vec<Box<dyn Stmt>>,
+}
+
+impl Expr for Program{
+    fn accept(&self, visitor: &mut dyn Visitor){
+        visitor.visit_program(self);
     }
 }
+
+pub struct Block{
+    pub statements: Vec<Box<dyn Stmt>>,
+}
+
+impl Expr for Block{
+    fn accept(&self, visitor: &mut dyn Visitor){
+        visitor.visit_block(self);
+    }
+}
+
+pub struct UnaryExpr {
+    pub operator: Token,
+    pub right: Box<dyn Expr>,
+}
+
+pub struct BinaryExpr {
+    pub left: Box<dyn Expr>,
+    pub operator: Token,
+    pub right: Box<dyn Expr>,
+}
+
+pub struct GroupingExpr {
+    pub expression: Box<dyn Expr>,
+}
+
+pub struct StringLiteral {
+    pub value: String,
+}
+
+pub struct NumberLiteral {
+    pub value: f64,
+}
+
+pub trait Visitor{
+    fn visit_program(&mut self, expr: &Program);
+    fn visit_stmt(&mut self, expr: &dyn Stmt);
+    fn visit_block(&mut self, expr: &Block);
+    fn visit_unary_expr(&mut self, expr: &UnaryExpr);
+    fn visit_binary_expr(&mut self, expr: &BinaryExpr);
+    fn visit_string_literal(&mut self, expr: &StringLiteral);
+    fn visit_number_literal(&mut self, expr: &NumberLiteral);
+}
+
+pub struct AstPrinter{
+    pub indent: usize,
+}
+
+impl Visitor for AstPrinter {
+    fn visit_program(&mut self, expr: &Program) {
+        println!("Program");
+        self.indent += 1;
+        for stmt in &expr.statements {
+            stmt.accept(self);
+        }
+        self.indent -= 1;
+    }
+
+    fn visit_stmt(&mut self, expr: &dyn Stmt) {
+        println!("{}", " ".repeat(self.indent));
+        expr.accept(self);
+    }
+
+    fn visit_block(&mut self, expr: &Block) {
+        println!("GroupingExpr");
+        self.indent += 1;
+        for stmt in &expr.statements {
+            stmt.accept(self);
+        }
+        self.indent -= 1;
+    }
+
+    fn visit_unary_expr(&mut self, expr: &UnaryExpr) {
+        println!("UnaryExpr");
+        self.indent += 1;
+        expr.right.accept(self);
+        self.indent -= 1;
+    }
+
+    fn visit_binary_expr(&mut self, expr: &BinaryExpr) {
+        println!("BinaryExpr");
+        self.indent += 1;
+        expr.left.accept(self);
+        expr.right.accept(self);
+        self.indent -= 1;
+    }
+
+    fn visit_string_literal(&mut self, expr: &StringLiteral) {
+        println!("StringLiteral");
+        self.indent += 1;
+        println!("{}", expr.value);
+        self.indent -= 1;
+    }
+
+    fn visit_number_literal(&mut self, expr: &NumberLiteral) {
+        println!("NumberLiteral");
+        self.indent += 1;
+        println!("{}", expr.value);
+        self.indent -= 1;
+    }
+}
+
 
 pub fn define_ast(_output_dir: String, _base_name: String, _types: Vec<String>){
     let _path = _output_dir + "/" + _base_name.as_str() + ".rs";
@@ -556,23 +645,4 @@ pub fn define_visitor(_writer: &mut Writer, _base_name: String, _types: Vec<Stri
        }}", _type, _type).as_str());
    }
    println!("{}",_writer.output);
-}
-
-pub struct AstPrinter {
-    writer: Writer,
-    indent: usize,
-}
-
-impl AstPrinter {
-    fn new() -> AstPrinter {
-        AstPrinter {
-            writer: Writer::new(),
-            indent: 0,
-        }
-    }
-
-    fn print(&self, expr: &Expr) {
-        
-    }
-
 }
