@@ -2,21 +2,23 @@ use std::io;
 use std::io::Read;
 use std::fs::File;
 use std::io::Write;
+use lox::Visitor;
 fn main() {
-    let expression = lox::BinaryExpr {
-        left: Box::new(lox::NumberLiteral{value: 1.0}),
+    let _expression = lox::BinaryExpr {
+        left: Box::new(lox::NumberLiteralExpr{value: 1.0}),
         operator: lox::Token{
             lexeme: "+".to_string(),
             literal: None ,
             line: 1,
             token_type: lox::TokenType::Plus,
         },
-        right: Box::new(lox::NumberLiteral{value: 2.0}),
-    };
-    let mut visitor = AstPrinter{
-        indent: 0,
+        right: Box::new(lox::NumberLiteralExpr{value: 2.0}),
     };
 
+    let mut visitor = lox::AstPrinter{
+        indent: 0,
+    };
+    visitor.visit_binary_expr(&_expression);
 
     //let args: Vec<String> = std::env::args().collect();
     //if args.len() != 2 {

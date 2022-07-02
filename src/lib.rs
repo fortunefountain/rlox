@@ -27,10 +27,10 @@ impl Literal for NumberLiteral {
 }
 
 pub struct Token {
-    token_type: TokenType,
-    lexeme: String,
-    literal: Option<Box<dyn Literal>>,
-    line: u32,
+    pub token_type: TokenType,
+    pub lexeme: String,
+    pub literal: Option<Box<dyn Literal>>,
+    pub line: u32,
 }
 
 #[derive(Debug)]
@@ -568,6 +568,7 @@ impl Visitor for AstPrinter {
         expr.right.accept(self);
         self.indent -= 1;
     }
+
 
     fn visit_string_literal(&mut self, expr: &StringLiteralExpr) {
         println!("StringLiteralExpr");
