@@ -3,19 +3,34 @@ use std::io::Read;
 use std::fs::File;
 use std::io::Write;
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() != 2 {
-        println!("Usage: {} <output directory>", args[0]);
-        std::process::exit(1);
-    }
-    let output_dir = &args[1];
-    let mut types = Vec::new();
-    types.push(String::from("Binary: Expr left, Token operator, Expr right"));
-    types.push(String::from("Grouping Expr expression"));
-    types.push(String::from("Literal: Object value"));
-    types.push(String::from("Unary: Token operator, Expr right"));
-     
-    lox::define_ast(String::from(output_dir), String::from("Expr"), types);
+    let expression = lox::BinaryExpr {
+        left: Box::new(lox::NumberLiteral{value: 1.0}),
+        operator: lox::Token{
+            lexeme: "+".to_string(),
+            literal: None ,
+            line: 1,
+            token_type: lox::TokenType::Plus,
+        },
+        right: Box::new(lox::NumberLiteral{value: 2.0}),
+    };
+    let mut visitor = AstPrinter{
+        indent: 0,
+    };
+
+
+    //let args: Vec<String> = std::env::args().collect();
+    //if args.len() != 2 {
+    //    println!("Usage: {} <output directory>", args[0]);
+    //    std::process::exit(1);
+    //}
+    //let output_dir = &args[1];
+    //let mut types = Vec::new();
+    //types.push(String::from("Binary: Expr left, Token operator, Expr right"));
+    //types.push(String::from("Grouping Expr expression"));
+    //types.push(String::from("Literal: Object value"));
+    //types.push(String::from("Unary: Token operator, Expr right"));
+    // 
+    //lox::define_ast(String::from(output_dir), String::from("Expr"), types);
 
 
     //Scanner test
