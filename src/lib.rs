@@ -2,10 +2,34 @@ use std::fmt;
 use std::fs::File;
 use std::io::Write;
 
+pub trait Literal {
+    fn literal(&self) -> String;
+}
+
+pub struct StringLiteral{
+    value: String
+}
+
+impl Literal for StringLiteral {
+    fn literal(&self) -> String {
+        self.value.clone()
+    }
+}
+
+pub struct NumberLiteral{
+    value: f32
+}
+
+impl Literal for NumberLiteral {
+    fn literal(&self) -> String {
+        self.value.to_string()
+    }
+}
+
 pub struct Token {
     token_type: TokenType,
     lexeme: String,
-    literal: Option<Box<dyn Expr>>,
+    literal: Option<Box<dyn Literal>>,
     line: u32,
 }
 
@@ -51,6 +75,53 @@ pub enum TokenType {
     While,
     Eof,
 }
+
+impl std::clone::Clone for TokenType {
+    fn clone(&self) -> Self {
+        match self {
+            TokenType::LeftParen => TokenType::LeftParen,
+            TokenType::RightParen => TokenType::RightParen,
+            TokenType::LeftBrace => TokenType::LeftBrace,
+            TokenType::RightBrace => TokenType::RightBrace,
+            TokenType::Comma => TokenType::Comma,
+            TokenType::Dot => TokenType::Dot,
+            TokenType::Minus => TokenType::Minus,
+            TokenType::Plus => TokenType::Plus,
+            TokenType::Semicolon => TokenType::Semicolon,
+            TokenType::Slash => TokenType::Slash,
+            TokenType::Star => TokenType::Star,
+            TokenType::Bang => TokenType::Bang,
+            TokenType::BangEqual => TokenType::BangEqual,
+            TokenType::Equal => TokenType::Equal,
+            TokenType::EqualEqual => TokenType::EqualEqual,
+            TokenType::Greater => TokenType::Greater,
+            TokenType::GreaterEqual => TokenType::GreaterEqual,
+            TokenType::Less => TokenType::Less,
+            TokenType::LessEqual => TokenType::LessEqual,
+            TokenType::Identifier => TokenType::Identifier,
+            TokenType::String => TokenType::String,
+            TokenType::Number => TokenType::Number,
+            TokenType::And => TokenType::And,
+            TokenType::Class => TokenType::Class,
+            TokenType::Else => TokenType::Else,
+            TokenType::False => TokenType::False,
+            TokenType::Fun => TokenType::Fun,
+            TokenType::For => TokenType::For,
+            TokenType::If => TokenType::If,
+            TokenType::Nil => TokenType::Nil,
+            TokenType::Or => TokenType::Or,
+            TokenType::Print => TokenType::Print,
+            TokenType::Return => TokenType::Return,
+            TokenType::Super => TokenType::Super,
+            TokenType::This => TokenType::This,
+            TokenType::True => TokenType::True,
+            TokenType::Var => TokenType::Var,
+            TokenType::While => TokenType::While,
+            TokenType::Eof => TokenType::Eof,
+        }
+    }
+}
+
 
 impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -102,7 +173,11 @@ impl Token {
     pub fn to_string(&mut self) -> String {
         match self.token_type {
              _ => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal.unwrap(), self.line)
+                 if self.literal.is_some() {
+                     self.literal.as_mut().unwrap().literal()
+                 } else {
+                     self.lexeme.clone()
+                 }
             }
        }
     }
@@ -318,20 +393,17 @@ impl Scanner {
     }
 
     fn add_token(&mut self, token_type: TokenType){
-        let _token_type = token_type.clone();
         self.tokens.push(
             Token {
                 token_type,
                 lexeme: self.source[self.start as usize..self.current as usize].to_string(),
-                literal: match _token_type {
-                    TokenType::Number => Some(Box::new(NumberLiteral))
-                },
+                literal: None,
                 line: self.line,
             }
         )
     }
 
-    fn add_string_token(&mut self, token_type: TokenType, literal: String){
+    fn add_string_token(&mut self, token_type: TokenType, literal:Option<Box<dyn Literal>>) {
         self.tokens.push(
             Token {
                 token_type,
@@ -354,7 +426,7 @@ impl Scanner {
         } else {
             self.advance();
             let value = self.source[self.start as usize + 1..self.current as usize - 1].to_string();
-            self.add_string_token(TokenType::String, value);
+            self.add_string_token(TokenType::String, Some(Box::new(StringLiteral{value})));
         }
     }
 
@@ -369,6 +441,12 @@ pub trait Expr{
     fn accept(&self, visitor: &mut dyn Visitor);
 }
 
+
+impl fmt::Display for dyn Expr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
 
 
 pub trait Stmt{
@@ -400,22 +478,42 @@ pub struct UnaryExpr {
     pub right: Box<dyn Expr>,
 }
 
+impl Expr for UnaryExpr{
+    fn accept(&self, visitor: &mut dyn Visitor){
+        visitor.visit_unary_expr(self);
+    }
+}
+
 pub struct BinaryExpr {
     pub left: Box<dyn Expr>,
     pub operator: Token,
     pub right: Box<dyn Expr>,
 }
 
-pub struct GroupingExpr {
-    pub expression: Box<dyn Expr>,
+impl Expr for BinaryExpr{
+    fn accept(&self, visitor: &mut dyn Visitor){
+        visitor.visit_binary_expr(self);
+    }
 }
 
-pub struct StringLiteral {
+pub struct StringLiteralExpr {
     pub value: String,
 }
 
-pub struct NumberLiteral {
+impl Expr for StringLiteralExpr{
+    fn accept(&self, visitor: &mut dyn Visitor){
+        visitor.visit_string_literal(self);
+    }
+}
+
+pub struct NumberLiteralExpr {
     pub value: f64,
+}
+
+impl Expr for NumberLiteralExpr{
+    fn accept(&self, visitor: &mut dyn Visitor){
+        visitor.visit_number_literal(self);
+    }
 }
 
 pub trait Visitor{
@@ -424,8 +522,8 @@ pub trait Visitor{
     fn visit_block(&mut self, expr: &Block);
     fn visit_unary_expr(&mut self, expr: &UnaryExpr);
     fn visit_binary_expr(&mut self, expr: &BinaryExpr);
-    fn visit_string_literal(&mut self, expr: &StringLiteral);
-    fn visit_number_literal(&mut self, expr: &NumberLiteral);
+    fn visit_string_literal(&mut self, expr: &StringLiteralExpr);
+    fn visit_number_literal(&mut self, expr: &NumberLiteralExpr);
 }
 
 pub struct AstPrinter{
@@ -471,15 +569,15 @@ impl Visitor for AstPrinter {
         self.indent -= 1;
     }
 
-    fn visit_string_literal(&mut self, expr: &StringLiteral) {
-        println!("StringLiteral");
+    fn visit_string_literal(&mut self, expr: &StringLiteralExpr) {
+        println!("StringLiteralExpr");
         self.indent += 1;
         println!("{}", expr.value);
         self.indent -= 1;
     }
 
-    fn visit_number_literal(&mut self, expr: &NumberLiteral) {
-        println!("NumberLiteral");
+    fn visit_number_literal(&mut self, expr: &NumberLiteralExpr) {
+        println!("NumberLiteralExpr");
         self.indent += 1;
         println!("{}", expr.value);
         self.indent -= 1;
