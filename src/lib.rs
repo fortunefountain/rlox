@@ -2,11 +2,10 @@ use std::fmt;
 use std::fs::File;
 use std::io::Write;
 
-#[derive(Debug)]
 pub struct Token {
     token_type: TokenType,
     lexeme: String,
-    literal: Option<Literal>,
+    literal: Option<Box<dyn Expr>>,
     line: u32,
 }
 
@@ -102,122 +101,8 @@ impl fmt::Display for TokenType {
 impl Token {
     pub fn to_string(&mut self) -> String {
         match self.token_type {
-            TokenType::Number => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Plus => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Minus => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Eof => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::LeftParen => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::RightParen => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::LeftBrace => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::RightBrace => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Comma => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Dot => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Semicolon => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Star => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Bang => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::BangEqual => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Slash => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Equal => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::EqualEqual => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Greater => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::GreaterEqual => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Less => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::LessEqual => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Identifier => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::And => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Class => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Else => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::False => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Fun => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::For => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::If => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Nil => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Or => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Print => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Return => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Super => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::This => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::True => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::Var => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-            TokenType::String => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
-            }
-             TokenType::While => {
-                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal, self.line)
+             _ => {
+                format!("{} {} {} {}", self.token_type, self.lexeme, self.literal.unwrap(), self.line)
             }
        }
     }
@@ -279,7 +164,7 @@ impl Scanner {
         self.tokens.push(Token {
             token_type: TokenType::Eof,
             lexeme: String::new(),
-            literal: String::new(),
+            literal: None,
             line: self.line,
         });
         &mut self.tokens
@@ -433,11 +318,14 @@ impl Scanner {
     }
 
     fn add_token(&mut self, token_type: TokenType){
+        let _token_type = token_type.clone();
         self.tokens.push(
             Token {
                 token_type,
                 lexeme: self.source[self.start as usize..self.current as usize].to_string(),
-                literal: String::new(),
+                literal: match _token_type {
+                    TokenType::Number => Some(Box::new(NumberLiteral))
+                },
                 line: self.line,
             }
         )
@@ -480,6 +368,8 @@ impl Scanner {
 pub trait Expr{
     fn accept(&self, visitor: &mut dyn Visitor);
 }
+
+
 
 pub trait Stmt{
     fn accept(&self, visitor: &mut dyn Visitor);
