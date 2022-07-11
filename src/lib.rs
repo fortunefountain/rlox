@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Write;
 
 pub trait Literal {
-    fn literal(&self) -> String;
+    fn to_string(&self) -> String;
 }
 
 pub struct StringLiteral{
@@ -11,7 +11,7 @@ pub struct StringLiteral{
 }
 
 impl Literal for StringLiteral {
-    fn literal(&self) -> String {
+    fn to_string(&self) -> String {
         self.value.clone()
     }
 }
@@ -21,7 +21,7 @@ pub struct NumberLiteral{
 }
 
 impl Literal for NumberLiteral {
-    fn literal(&self) -> String {
+    fn to_string(&self) -> String {
         self.value.to_string()
     }
 }
@@ -174,7 +174,7 @@ impl Token {
         match self.token_type {
              _ => {
                  if self.literal.is_some() {
-                     self.literal.as_mut().unwrap().literal()
+                     self.literal.as_mut().unwrap().to_string()
                  } else {
                      self.lexeme.clone()
                  }
@@ -345,8 +345,7 @@ impl Scanner {
     fn peek_next(&mut self) -> char {
         if self.current + 1 >= self.source.len() as u32 {
             return '\0';
-        }
-        self.source.chars().nth((self.current + 1) as usize).unwrap()
+        } self.source.chars().nth((self.current + 1) as usize).unwrap()
     }
 
     fn advance(&mut self) -> char {
@@ -447,7 +446,6 @@ impl fmt::Display for dyn Expr {
         write!(f, "{}", self.to_string())
     }
 }
-
 
 pub trait Stmt{
     fn accept(&self, visitor: &mut dyn Visitor);
@@ -619,20 +617,106 @@ impl Writer {
     }
 }
 
-pub fn define_types(_writer : &mut Writer, _name: String, _types: Vec<String>) {
-    _writer.write_line((String::from("pub enum ") + _name.as_str() + " {").as_str());
-    for _type in _types {
-        _writer.write_line((String::from("    ") + _type.as_str() + ",").as_str());
+struct Parser {
+    tokens: Vec<Box<Token>>,
+    current: usize,
+}
+
+impl Parser {
+    pub fn new(tokens: Vec<Box<Token>>) -> Parser {
+        Parser {
+            tokens,
+            current: 0,
+        }
     }
-    _writer.write_line("}");
+
+    pub fn expression(&mut self) -> Box<dyn Expr> {
+        self.equality()
+    }
+      
+    fn equality(&mut self) -> Box<dyn Expr> {
+        _expr = comparison();
+        while self.match_token_type(vec![TokenType::EqualEqual, TokenType::BangEqual]) {
+            let operator = self.previous();
+            let right = self.expression();
+            expr = Box::new(BinaryExpr {
+                left: Box::new(*_expr),
+                operator,
+                right: Box::new(*right),
+            });
+        }
+    }
+
+    fn match_token_type(&mut self, types: Vec<TokenType>) -> bool {
+        for token_type in types{
+            if self.check(token_type){
+                self.advance();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    fn check(&mut self, token_type: TokenType) -> bool{
+        if self.is_at_end() {
+            return false;
+        }else{
+            match self.peek().token_type {
+                token_type => true,
+                _ => false,
+            }
+        }
+    }
+
+    fn advance(&mut self) -> Token{
+        if !self.is_at_end() {
+            self.current += 1;
+        }
+        return self.previous();
+    }
+
+    fn is_at_end(&mut self) -> bool{
+        match self.peek().token_type {
+            TokenType::Eof => true,
+            _ => false,
+        }
+    }
+
+    fn peek(&mut self) -> Token{
+        return *self.tokens[self.current];
+    }
+
+    fn previous(&mut self) -> Token{
+        return *self.tokens[self.current - 1];
+    }
+
+    fn comparison(&mut self){
+        expr = term();
+        while self.match_token_type(vec![TokenType::Greater, TokenType::GreaterEqual, TokenType::Less, TokenType::LessEqual]) {
+            let operator = self.previous();
+            let right = self.term();
+            expr = Box::new(BinaryExpr {
+                left: Box::new(*expr),
+                operator,
+                right: Box::new(*right),
+            });
+        }
+    }
+
+    fn term(&mut self){
+        expr = self.factor();
+        while self.match_token_type(vec![TokenType::Minus, TokenType::Plus]) {
+            let operator = self.previous();
+            let right = self.factor();
+            expr = Box::new(BinaryExpr {
+                left: Box::new(*expr),
+                operator,
+                right: Box::new(*right),
+            });
+        }
+    }
+
+    fn factor(&mut self) -> dyn Expr{
+    }
 }
 
-
-pub fn define_visitor(_writer: &mut Writer, _base_name: String, _types: Vec<String>){
-   for _type in _types {
-       _writer.write_line(format!("pub trait {}Visitor<'a> {{
-           fn visit_{}(&mut self, expr: &'a Expr);
-       }}", _type, _type).as_str());
-   }
-   println!("{}",_writer.output);
-}
